@@ -1,0 +1,47 @@
+# =========================
+# 🧠 Proyecto: ECOMMERCE-FUNNEL-ANALYTICS
+# =========================
+
+# 🗂️ Archivos de datos grandes o sensibles
+data/*.csv
+*.csv
+
+# 🧩 Archivos temporales o de entorno
+*.env
+*.log
+*.tmp
+*.bak
+
+# 🐳 Docker
+*.pid
+*.tar
+*.sock
+*.pid.lock
+docker-compose.override.yml
+
+# 🧱 PostgreSQL / pgAdmin
+pgadmin/servers.json
+
+# 🧰 VS Code y sistema
+.vscode/
+.idea/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 🧪 SQLFluff cache
+.sqlfluff_cache/
+
+# 🧾 Archivos de sistema
+Thumbs.db
+.DS_Store
+
+# ⚙️ Scripts locales
+run.bat
+
+# 🚫 Ignorar todo lo que no sea código o documentación
+!*.sql
+!README.md
+!.sqlfluff
+!docker-compose.yml

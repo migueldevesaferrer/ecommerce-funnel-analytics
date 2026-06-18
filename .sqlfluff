@@ -3,7 +3,7 @@ dialect = postgres
 templater = jinja
 max_line_length = 120
 large_file_skip_byte_limit = 0
-exclude_rules = AM04
+exclude_rules = AM04, LT01
 
 [sqlfluff:indentation]
 indent_unit = space

@@ -32,19 +32,20 @@ RAW → CORE → SEMANTIC → ANALYSIS
 ```plaintext
 ECOMMERCE-FUNNEL-ANALYTICS/
 │
-├── data/                       # Datos RAW del proyecto (CSV original)
-│   └── customer_journey.csv    # Dataset sintético de sesiones de usuario
+├── data/                       
+│   └── customer_journey.csv    # Datos RAW del proyecto (Kaggle)
 │
-├── init/                       # Scripts SQL que inicializan la base de datos
+├── init/                        
 │   ├── 01_schema.sql           # Creación del esquema y tablas
 │   ├── 02_data.sql             # Inserción de datos en las tablas
-│   └── 03_eda.sql              # Exploratory Data Analysis (solo queries)
+│   ├── 03_eda.sql              # Exploratory Data Analysis sobre RAW
+│   └── 04_dimensional_analysis.sql  # Análisis del funnel sobre FACT + DIM
 │
-├── pgadmin/                    # Configuración opcional para pgAdmin
+├── pgadmin/                    
 │   └── servers.json            # Conexión preconfigurada al servidor PostgreSQL
 │
 ├── .gitignore                  # Archivos y carpetas excluidos del repositorio
-├── .sqlfluff                   # Configuración del linter SQL (SQLFluff)
+├── .sqlfluff                   # Configuración de SQLFluff
 ├── docker-compose.yml          # Orquestación de PostgreSQL + pgAdmin con Docker
 └── README.md                   # Documentación principal del proyecto
 ```
@@ -100,7 +101,6 @@ Crear la base de datos:
 
 ```CREATE DATABASE ecommerce_db;```
 
-
 Salir con \q.
 
 ---
@@ -112,9 +112,9 @@ Ejecutar en este orden:
 ```bash
 psql -U postgres -d ecommerce_db -f init/01_schema.sql
 psql -U postgres -d ecommerce_db -f init/02_data.sql
-psql -U postgres -d ecommerce_db -f init/eda.sql
+psql -U postgres -d ecommerce_db -f init/03_eda.sql
+psql -U postgres -d ecommerce_db -f init/04_dimensional_analysis.sql
 ```
-
 
 ---
 
@@ -131,7 +131,7 @@ Ejecutar:
 
 ## 4. Exploratory Data Analysis (EDA)
 
-El EDA incluye:
+El EDA incluye análisis sobre la tabla RAW `customer_journey`:
 
 - Conteo de filas y sesiones  
 - Distribución de PageType  
@@ -140,6 +140,10 @@ El EDA incluye:
 - Validación del funnel  
 - Detección de inconsistencias  
 - Análisis de sesiones incompletas  
+
+El análisis dimensional del funnel se encuentra en `init/04_dimensional_analysis.sql`, que trabaja con `fact_funnel` y las dimensiones `dim_*`.
+
+De esta forma, `init/03_eda.sql` mantiene la exploración y validación de datos RAW, mientras que `init/04_dimensional_analysis.sql` contiene el análisis del funnel construido sobre el modelo dimensional.
 
 ### Hallazgos principales
 
@@ -153,16 +157,15 @@ El EDA incluye:
 
 ## 5. Vistas SQL (Capa Semántica)
 
-Se crearon vistas para análisis:
+Se crearon vistas para análisis a partir del modelo dimensional:
 
-- vw_funnel_sesiones  
-- vw_funnel_aggregate  
-- vw_funnel_device  
-- vw_funnel_country  
-- vw_funnel_referral  
-- vw_funnel_tiempos  
+- vw_dimensional_funnel  
+- vw_dimensional_funnel_sessions  
+- vw_dimensional_conversion_by_device  
+- vw_dimensional_conversion_by_country  
+- vw_dimensional_conversion_by_source  
 
-Estas vistas permiten análisis rápidos y construcción de dashboards.
+Estas vistas permiten análisis rápidos y construcción de dashboards basados en `fact_funnel` y las dimensiones.
 
 ---
 

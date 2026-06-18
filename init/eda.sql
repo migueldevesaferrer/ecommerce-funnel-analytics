@@ -421,14 +421,13 @@ WHERE
 -- 3.6 VALIDACIÓN DE SESIONES INCOMPLETAS
 -- ============================================================
 
--- 3.6.1 Sesiones que solo tienen 1 evento 
+-- 3.6.1 Sesiones que solo tienen 1 evento
 SELECT
     "SessionID",
     COUNT(*) AS eventos
 FROM customer_journey
-GROUP BY "SessionID"
+GROUP BY "SessionID", "PageType"
 HAVING COUNT(*) = 1;
-
 
 -- 3.6.2 Sesiones que nunca pasan de home
 WITH pasos AS (
@@ -465,3 +464,275 @@ FROM customer_journey
 GROUP BY "UserID"
 HAVING COUNT(DISTINCT "DeviceType") > 3;
 
+/* ============================================================
+   BLOQUE 4 — ANÁLISIS DEL FUNNEL
+   ============================================================ */
+
+-- 4.1 Sesiones que pasan por cada paso del funnel
+SELECT
+    LOWER("PageType") AS page_type,
+    COUNT(DISTINCT "SessionID") AS sesiones
+FROM customer_journey
+GROUP BY page_type
+ORDER BY sesiones DESC;
+
+-- 4.2 Drop-off entre pasos consecutivos
+WITH pasos AS (
+    SELECT
+        "SessionID",
+        MAX(CASE WHEN LOWER("PageType") = 'home' THEN 1 END) AS home,
+        MAX(CASE WHEN LOWER("PageType") = 'product_page' THEN 1 END) AS product_page,
+        MAX(CASE WHEN LOWER("PageType") = 'cart' THEN 1 END) AS cart,
+        MAX(CASE WHEN LOWER("PageType") = 'checkout' THEN 1 END) AS checkout,
+        MAX(CASE WHEN LOWER("PageType") = 'confirmation' THEN 1 END) AS confirmation
+    FROM customer_journey
+    GROUP BY "SessionID"
+)
+
+SELECT
+    SUM(home) AS sesiones_home,
+    SUM(product_page) AS sesiones_product_page,
+    SUM(cart) AS sesiones_cart,
+    SUM(checkout) AS sesiones_checkout,
+    SUM(confirmation) AS sesiones_confirmation
+FROM pasos;
+
+-- 4.3 Conversion rate final (confirmation / home)
+WITH pasos AS (
+    SELECT
+        "SessionID",
+        MAX(CASE WHEN LOWER("PageType") = 'home' THEN 1 END) AS home,
+        MAX(CASE WHEN LOWER("PageType") = 'confirmation' THEN 1 END) AS confirmation
+    FROM customer_journey
+    GROUP BY "SessionID"
+)
+
+SELECT SUM(confirmation)::float / SUM(home) AS conversion_rate
+FROM pasos;
+
+-- 4.4 Funnel por DeviceType
+WITH pasos AS (
+    SELECT
+        "SessionID",
+        "DeviceType",
+        MAX(CASE WHEN LOWER("PageType") = 'home' THEN 1 END) AS home,
+        MAX(CASE WHEN LOWER("PageType") = 'confirmation' THEN 1 END) AS confirmation
+    FROM customer_journey
+    GROUP BY "SessionID", "DeviceType"
+)
+
+SELECT
+    "DeviceType",
+    SUM(home) AS sesiones_home,
+    SUM(confirmation) AS sesiones_confirmation,
+    SUM(confirmation)::float / SUM(home) AS conversion_rate
+FROM pasos
+GROUP BY "DeviceType"
+ORDER BY conversion_rate DESC;
+
+-- 4.5 Tiempo entre pasos (home → product_page → cart → checkout)
+WITH tiempos AS (
+    SELECT
+        "SessionID",
+        MIN(CASE WHEN LOWER("PageType") = 'home' THEN "Timestamp" END) AS t_home,
+        MIN(CASE WHEN LOWER("PageType") = 'product_page' THEN "Timestamp" END) AS t_product,
+        MIN(CASE WHEN LOWER("PageType") = 'cart' THEN "Timestamp" END) AS t_cart,
+        MIN(CASE WHEN LOWER("PageType") = 'checkout' THEN "Timestamp" END) AS t_checkout
+    FROM customer_journey
+    GROUP BY "SessionID"
+)
+
+SELECT
+    AVG(EXTRACT(EPOCH FROM (t_product - t_home))) AS avg_home_to_product,
+    AVG(EXTRACT(EPOCH FROM (t_cart - t_product))) AS avg_product_to_cart,
+    AVG(EXTRACT(EPOCH FROM (t_checkout - t_cart))) AS avg_cart_to_checkout
+FROM tiempos;
+
+/* ============================================================
+   BLOQUE 5 — ANÁLISIS POR DIMENSIONES
+   ============================================================ */
+
+-- 5.1 Conversion rate por país
+WITH pasos AS (
+    SELECT
+        "SessionID",
+        "Country",
+        MAX(CASE WHEN LOWER("PageType") = 'home' THEN 1 END) AS home,
+        MAX(CASE WHEN LOWER("PageType") = 'confirmation' THEN 1 END) AS confirmation
+    FROM customer_journey
+    GROUP BY "SessionID", "Country"
+)
+
+SELECT
+    "Country",
+    SUM(home) AS sesiones_home,
+    SUM(confirmation) AS sesiones_confirmation,
+    SUM(confirmation)::float / SUM(home) AS conversion_rate
+FROM pasos
+GROUP BY "Country"
+ORDER BY conversion_rate DESC;
+
+-- 5.2 Conversion rate por ReferralSource
+WITH pasos AS (
+    SELECT
+        "SessionID",
+        "ReferralSource",
+        MAX(CASE WHEN LOWER("PageType") = 'home' THEN 1 END) AS home,
+        MAX(CASE WHEN LOWER("PageType") = 'confirmation' THEN 1 END) AS confirmation
+    FROM customer_journey
+    GROUP BY "SessionID", "ReferralSource"
+)
+
+SELECT
+    "ReferralSource",
+    SUM(home) AS sesiones_home,
+    SUM(confirmation) AS sesiones_confirmation,
+    SUM(confirmation)::float / SUM(home) AS conversion_rate
+FROM pasos
+GROUP BY "ReferralSource"
+ORDER BY conversion_rate DESC;
+
+-- 5.3 Conversion rate por DeviceType
+WITH pasos AS (
+    SELECT
+        "SessionID",
+        "DeviceType",
+        MAX(CASE WHEN LOWER("PageType") = 'home' THEN 1 END) AS home,
+        MAX(CASE WHEN LOWER("PageType") = 'confirmation' THEN 1 END) AS confirmation
+    FROM customer_journey
+    GROUP BY "SessionID", "DeviceType"
+)
+
+SELECT
+    "DeviceType",
+    SUM(home) AS sesiones_home,
+    SUM(confirmation) AS sesiones_confirmation,
+    SUM(confirmation)::float / SUM(home) AS conversion_rate
+FROM pasos
+GROUP BY "DeviceType"
+ORDER BY conversion_rate DESC;
+
+
+---- VISTAS
+
+CREATE OR REPLACE VIEW vw_funnel_sesiones AS
+WITH pasos AS (
+    SELECT
+        "SessionID",
+        MAX(CASE WHEN LOWER("PageType") = 'home' THEN 1 END) AS home,
+        MAX(CASE WHEN LOWER("PageType") = 'product_page' THEN 1 END) AS product_page,
+        MAX(CASE WHEN LOWER("PageType") = 'cart' THEN 1 END) AS cart,
+        MAX(CASE WHEN LOWER("PageType") = 'checkout' THEN 1 END) AS checkout,
+        MAX(CASE WHEN LOWER("PageType") = 'confirmation' THEN 1 END) AS confirmation,
+        MAX(("Purchased")::int) AS purchased
+    FROM customer_journey
+    GROUP BY "SessionID"
+)
+
+SELECT *
+FROM pasos;
+
+
+CREATE OR REPLACE VIEW vw_funnel_aggregate AS
+WITH pasos AS (
+    SELECT
+        "SessionID",
+        MAX(CASE WHEN LOWER("PageType") = 'home' THEN 1 END) AS home,
+        MAX(CASE WHEN LOWER("PageType") = 'product_page' THEN 1 END) AS product_page,
+        MAX(CASE WHEN LOWER("PageType") = 'cart' THEN 1 END) AS cart,
+        MAX(CASE WHEN LOWER("PageType") = 'checkout' THEN 1 END) AS checkout,
+        MAX(CASE WHEN LOWER("PageType") = 'confirmation' THEN 1 END) AS confirmation
+    FROM customer_journey
+    GROUP BY "SessionID"
+)
+
+SELECT
+    SUM(home) AS sesiones_home,
+    SUM(product_page) AS sesiones_product_page,
+    SUM(cart) AS sesiones_cart,
+    SUM(checkout) AS sesiones_checkout,
+    SUM(confirmation) AS sesiones_confirmation,
+    SUM(confirmation)::float / SUM(home) AS conversion_rate_final
+FROM pasos;
+
+
+CREATE OR REPLACE VIEW vw_funnel_device AS
+WITH pasos AS (
+    SELECT
+        "SessionID",
+        "DeviceType",
+        MAX(CASE WHEN LOWER("PageType") = 'home' THEN 1 END) AS home,
+        MAX(CASE WHEN LOWER("PageType") = 'confirmation' THEN 1 END) AS confirmation
+    FROM customer_journey
+    GROUP BY "SessionID", "DeviceType"
+)
+
+SELECT
+    "DeviceType",
+    SUM(home) AS sesiones_home,
+    SUM(confirmation) AS sesiones_confirmation,
+    SUM(confirmation)::float / SUM(home) AS conversion_rate
+FROM pasos
+GROUP BY "DeviceType"
+ORDER BY conversion_rate DESC;
+
+CREATE OR REPLACE VIEW vw_funnel_country AS
+WITH pasos AS (
+    SELECT
+        "SessionID",
+        "Country",
+        MAX(CASE WHEN LOWER("PageType") = 'home' THEN 1 END) AS home,
+        MAX(CASE WHEN LOWER("PageType") = 'confirmation' THEN 1 END) AS confirmation
+    FROM customer_journey
+    GROUP BY "SessionID", "Country"
+)
+
+SELECT
+    "Country",
+    SUM(home) AS sesiones_home,
+    SUM(confirmation) AS sesiones_confirmation,
+    SUM(confirmation)::float / SUM(home) AS conversion_rate
+FROM pasos
+GROUP BY "Country"
+ORDER BY conversion_rate DESC;
+
+
+CREATE OR REPLACE VIEW vw_funnel_referral AS
+WITH pasos AS (
+    SELECT
+        "SessionID",
+        "ReferralSource",
+        MAX(CASE WHEN LOWER("PageType") = 'home' THEN 1 END) AS home,
+        MAX(CASE WHEN LOWER("PageType") = 'confirmation' THEN 1 END) AS confirmation
+    FROM customer_journey
+    GROUP BY "SessionID", "ReferralSource"
+)
+
+SELECT
+    "ReferralSource",
+    SUM(home) AS sesiones_home,
+    SUM(confirmation) AS sesiones_confirmation,
+    SUM(confirmation)::float / SUM(home) AS conversion_rate
+FROM pasos
+GROUP BY "ReferralSource"
+ORDER BY conversion_rate DESC;
+
+
+CREATE OR REPLACE VIEW vw_funnel_tiempos AS
+WITH tiempos AS (
+    SELECT
+        "SessionID",
+        MIN(CASE WHEN LOWER("PageType") = 'home' THEN "Timestamp" END) AS t_home,
+        MIN(CASE WHEN LOWER("PageType") = 'product_page' THEN "Timestamp" END) AS t_product,
+        MIN(CASE WHEN LOWER("PageType") = 'cart' THEN "Timestamp" END) AS t_cart,
+        MIN(CASE WHEN LOWER("PageType") = 'checkout' THEN "Timestamp" END) AS t_checkout
+    FROM customer_journey
+    GROUP BY "SessionID"
+)
+
+SELECT
+    "SessionID",
+    EXTRACT(EPOCH FROM (t_product - t_home)) AS home_to_product_seconds,
+    EXTRACT(EPOCH FROM (t_cart - t_product)) AS product_to_cart_seconds,
+    EXTRACT(EPOCH FROM (t_checkout - t_cart)) AS cart_to_checkout_seconds
+FROM tiempos;

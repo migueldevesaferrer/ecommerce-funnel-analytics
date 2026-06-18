@@ -2,11 +2,6 @@
    01_schema.sql
    Capa: SCHEMA (Modelo y estructura)
    Objetivo: Crear todas las tablas RAW, DIM y FACT del proyecto.
-   Cumple requisitos del máster:
-   - 1 tabla de hechos + 4+ dimensiones
-   - PK, FK, UNIQUE, CHECK, NOT NULL
-   - Comentarios explicando decisiones
-   - Normalización en 3FN
    ============================================================ */
 
 -- ============================================================

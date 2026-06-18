@@ -29,6 +29,7 @@ RAW → CORE → SEMANTIC → ANALYSIS
 
 ### 2.1 Estructura del proyecto
 
+```plaintext
 ECOMMERCE-FUNNEL-ANALYTICS/
 │
 ├── data/
@@ -47,6 +48,8 @@ ECOMMERCE-FUNNEL-ANALYTICS/
 ├── docker-compose.yml
 ├── README.md
 └── run.bat
+```
+
 
 ---
 

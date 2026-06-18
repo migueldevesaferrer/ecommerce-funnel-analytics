@@ -32,22 +32,21 @@ RAW → CORE → SEMANTIC → ANALYSIS
 ```plaintext
 ECOMMERCE-FUNNEL-ANALYTICS/
 │
-├── data/
-│   └── customer_journey.csv
+├── data/                       # Datos RAW del proyecto (CSV original)
+│   └── customer_journey.csv    # Dataset sintético de sesiones de usuario
 │
-├── init/
-│   ├── 01_schema.sql
-│   ├── 02_data.sql
-│   └── 03_eda.sql
+├── init/                       # Scripts SQL que inicializan la base de datos
+│   ├── 01_schema.sql           # Creación del esquema y tablas
+│   ├── 02_data.sql             # Inserción de datos en las tablas
+│   └── 03_eda.sql              # Exploratory Data Analysis (solo queries)
 │
-├── pgadmin/
-│   └── servers.json
+├── pgadmin/                    # Configuración opcional para pgAdmin
+│   └── servers.json            # Conexión preconfigurada al servidor PostgreSQL
 │
-├── .gitignore
-├── .sqlfluff
-├── docker-compose.yml
-├── README.md
-└── run.bat
+├── .gitignore                  # Archivos y carpetas excluidos del repositorio
+├── .sqlfluff                   # Configuración del linter SQL (SQLFluff)
+├── docker-compose.yml          # Orquestación de PostgreSQL + pgAdmin con Docker
+└── README.md                   # Documentación principal del proyecto
 ```
 
 
@@ -57,9 +56,22 @@ ECOMMERCE-FUNNEL-ANALYTICS/
 
 ### 3.1 Requisitos previos
 
-- Docker Desktop instalado  
-- Cliente PostgreSQL (`psql`)  
-- VS Code recomendado  
+#### 3.1.1 Docker
+El entorno se levanta completamente mediante Docker, por lo que es necesario tener instalado:
+
+- Docker Desktop (Windows / macOS)
+- Docker Engine + Docker Compose (Linux)
+
+#### 3.1.2 PostgreSQL y pgAdmin (incluidos en Docker)
+No es necesario instalarlos manualmente.  
+El archivo `docker-compose.yml` crea:
+
+- Un contenedor PostgreSQL
+- Un contenedor pgAdmin para administración visual
+
+#### 3.1.3 SQLFluff 4.x (opcional pero recomendado)
+El proyecto utiliza SQLFluff para validar y formatear SQL.  
+Es importante usar **SQLFluff versión 4.x**, ya que la versión 3.x usa un sistema de configuración distinto.
 
 ---
 
@@ -86,7 +98,7 @@ Entrar al contenedor:
 
 Crear la base de datos:
 
-CREATE DATABASE ecommerce_db;
+```CREATE DATABASE ecommerce_db;```
 
 
 Salir con \q.
@@ -97,16 +109,18 @@ Salir con \q.
 
 Ejecutar en este orden:
 
-```psql -U postgres -d ecommerce_db -f init/01_schema.sql```
-```psql -U postgres -d ecommerce_db -f init/02_data.sql```
-```psql -U postgres -d ecommerce_db -f init/eda.sql```
+```bash
+psql -U postgres -d ecommerce_db -f init/01_schema.sql
+psql -U postgres -d ecommerce_db -f init/02_data.sql
+psql -U postgres -d ecommerce_db -f init/eda.sql
+```
 
 
 ---
 
 ### 3.5 Verificar que todo está correcto
 
-docker exec -it ecommerce-postgres psql -U postgres -d ecommerce_db
+```docker exec -it ecommerce-postgres psql -U postgres -d ecommerce_db```
 
 Ejecutar:
 

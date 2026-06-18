@@ -64,7 +64,7 @@ ECOMMERCE-FUNNEL-ANALYTICS/
 
 En la raíz del proyecto:
 
-```docker-compose up -d
+```docker-compose up -d```
 
 
 Esto levanta:
@@ -78,7 +78,7 @@ Esto levanta:
 
 Entrar al contenedor:
 
-```docker exec -it ecommerce-postgres psql -U postgres
+```docker exec -it ecommerce-postgres psql -U postgres```
 
 
 Crear la base de datos:
@@ -94,9 +94,9 @@ Salir con \q.
 
 Ejecutar en este orden:
 
-```psql -U postgres -d ecommerce_db -f init/01_schema.sql
-```psql -U postgres -d ecommerce_db -f init/02_data.sql
-```psql -U postgres -d ecommerce_db -f init/eda.sql
+```psql -U postgres -d ecommerce_db -f init/01_schema.sql```
+```psql -U postgres -d ecommerce_db -f init/02_data.sql```
+```psql -U postgres -d ecommerce_db -f init/eda.sql```
 
 
 ---
@@ -107,7 +107,7 @@ docker exec -it ecommerce-postgres psql -U postgres -d ecommerce_db
 
 Ejecutar:
 
-```SELECT COUNT(*) FROM customer_journey;
+```SELECT COUNT(*) FROM customer_journey;```
 
 
 ---

@@ -18,14 +18,20 @@ El objetivo es construir un pipeline analítico sólido y reproducible que permi
 
 ## 2. Arquitectura del Proyecto
 
-El proyecto sigue una arquitectura analítica estándar:
+Este proyecto sigue un flujo analítico práctico y reproducible:
 
 RAW → CORE → SEMANTIC → ANALYSIS
 
-- RAW: Datos originales sin transformar  
-- CORE: Limpieza, validación y estandarización  
-- SEMANTIC: Vistas SQL para análisis  
-- ANALYSIS: KPIs, métricas y conclusiones  
+- RAW: carga y exploración inicial de los datos originales en `customer_journey`.
+- CORE: limpieza, validación y construcción del modelo dimensional en `dim_*` y `fact_funnel`.
+- SEMANTIC: definición de vistas que representan el funnel y facilitan el reporting.
+- ANALYSIS: cálculo de KPIs del funnel y conclusiones basadas en las vistas.
+
+En concreto:
+- `init/01_schema.sql` crea el esquema RAW, las dimensiones y la tabla de hechos.
+- `init/02_data.sql` carga el CSV en RAW, normaliza los datos y pobla `dim_*` + `fact_funnel`.
+- `init/03_eda.sql` analiza la calidad y consistencia de los datos RAW.
+- `init/04_dimensional_analysis.sql` analiza el funnel usando el modelo dimensional y crea las vistas semánticas.
 
 ### 2.1 Estructura del proyecto
 

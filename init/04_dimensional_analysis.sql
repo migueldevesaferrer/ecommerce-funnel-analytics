@@ -4,7 +4,7 @@
    Objetivo: Analizar el funnel usando la tabla de hechos y las dimensiones.
    ============================================================ */
 
--- 1. CTE base: hechos enriquecidos con dimensiones
+-- 1. Sesiones por paso del funnel
 WITH funnel AS (
     SELECT
         f.fact_id,
@@ -26,7 +26,6 @@ WITH funnel AS (
     LEFT JOIN dim_page AS dp ON f.page_id = dp.page_id
 )
 
--- 1. Sesiones por paso del funnel
 SELECT
     page_type,
     COUNT(DISTINCT session_code) AS sesiones
@@ -35,7 +34,26 @@ GROUP BY page_type
 ORDER BY sesiones DESC;
 
 -- 2. Drop-off entre pasos consecutivos usando el modelo dimensional
-WITH session_steps AS (
+WITH funnel AS (
+    SELECT
+        f.fact_id,
+        f.session_code,
+        f.event_timestamp,
+        f.time_on_page_seconds,
+        f.items_in_cart,
+        f.purchased,
+        du.user_code AS user_id,
+        dd.device_type,
+        dc.country_name AS country,
+        ds.source_name AS referral_source,
+        dp.page_type
+    FROM fact_funnel AS f
+    LEFT JOIN dim_user AS du ON f.user_id = du.user_id
+    LEFT JOIN dim_device AS dd ON f.device_id = dd.device_id
+    LEFT JOIN dim_country AS dc ON f.country_id = dc.country_id
+    LEFT JOIN dim_source AS ds ON f.source_id = ds.source_id
+    LEFT JOIN dim_page AS dp ON f.page_id = dp.page_id
+), session_steps AS (
     SELECT
         session_code,
         MAX(CASE WHEN page_type = 'home' THEN 1 END) AS home,
@@ -56,7 +74,26 @@ SELECT
 FROM session_steps;
 
 -- 3. Conversion rate global en el modelo dimensional
-WITH session_steps AS (
+WITH funnel AS (
+    SELECT
+        f.fact_id,
+        f.session_code,
+        f.event_timestamp,
+        f.time_on_page_seconds,
+        f.items_in_cart,
+        f.purchased,
+        du.user_code AS user_id,
+        dd.device_type,
+        dc.country_name AS country,
+        ds.source_name AS referral_source,
+        dp.page_type
+    FROM fact_funnel AS f
+    LEFT JOIN dim_user AS du ON f.user_id = du.user_id
+    LEFT JOIN dim_device AS dd ON f.device_id = dd.device_id
+    LEFT JOIN dim_country AS dc ON f.country_id = dc.country_id
+    LEFT JOIN dim_source AS ds ON f.source_id = ds.source_id
+    LEFT JOIN dim_page AS dp ON f.page_id = dp.page_id
+), session_steps AS (
     SELECT
         session_code,
         MAX(CASE WHEN page_type = 'home' THEN 1 END) AS home,
@@ -69,7 +106,26 @@ SELECT SUM(confirmation)::float / NULLIF(SUM(home), 0) AS conversion_rate
 FROM session_steps;
 
 -- 4. Conversion rate por DeviceType
-WITH session_steps AS (
+WITH funnel AS (
+    SELECT
+        f.fact_id,
+        f.session_code,
+        f.event_timestamp,
+        f.time_on_page_seconds,
+        f.items_in_cart,
+        f.purchased,
+        du.user_code AS user_id,
+        dd.device_type,
+        dc.country_name AS country,
+        ds.source_name AS referral_source,
+        dp.page_type
+    FROM fact_funnel AS f
+    LEFT JOIN dim_user AS du ON f.user_id = du.user_id
+    LEFT JOIN dim_device AS dd ON f.device_id = dd.device_id
+    LEFT JOIN dim_country AS dc ON f.country_id = dc.country_id
+    LEFT JOIN dim_source AS ds ON f.source_id = ds.source_id
+    LEFT JOIN dim_page AS dp ON f.page_id = dp.page_id
+), session_steps AS (
     SELECT
         session_code,
         device_type,
@@ -89,7 +145,26 @@ GROUP BY device_type
 ORDER BY conversion_rate DESC;
 
 -- 5. Conversion rate por país
-WITH session_steps AS (
+WITH funnel AS (
+    SELECT
+        f.fact_id,
+        f.session_code,
+        f.event_timestamp,
+        f.time_on_page_seconds,
+        f.items_in_cart,
+        f.purchased,
+        du.user_code AS user_id,
+        dd.device_type,
+        dc.country_name AS country,
+        ds.source_name AS referral_source,
+        dp.page_type
+    FROM fact_funnel AS f
+    LEFT JOIN dim_user AS du ON f.user_id = du.user_id
+    LEFT JOIN dim_device AS dd ON f.device_id = dd.device_id
+    LEFT JOIN dim_country AS dc ON f.country_id = dc.country_id
+    LEFT JOIN dim_source AS ds ON f.source_id = ds.source_id
+    LEFT JOIN dim_page AS dp ON f.page_id = dp.page_id
+), session_steps AS (
     SELECT
         session_code,
         country,
@@ -109,7 +184,26 @@ GROUP BY country
 ORDER BY conversion_rate DESC;
 
 -- 6. Conversion rate por fuente de referencia
-WITH session_steps AS (
+WITH funnel AS (
+    SELECT
+        f.fact_id,
+        f.session_code,
+        f.event_timestamp,
+        f.time_on_page_seconds,
+        f.items_in_cart,
+        f.purchased,
+        du.user_code AS user_id,
+        dd.device_type,
+        dc.country_name AS country,
+        ds.source_name AS referral_source,
+        dp.page_type
+    FROM fact_funnel AS f
+    LEFT JOIN dim_user AS du ON f.user_id = du.user_id
+    LEFT JOIN dim_device AS dd ON f.device_id = dd.device_id
+    LEFT JOIN dim_country AS dc ON f.country_id = dc.country_id
+    LEFT JOIN dim_source AS ds ON f.source_id = ds.source_id
+    LEFT JOIN dim_page AS dp ON f.page_id = dp.page_id
+), session_steps AS (
     SELECT
         session_code,
         referral_source,
@@ -129,7 +223,26 @@ GROUP BY referral_source
 ORDER BY conversion_rate DESC;
 
 -- 7. Tiempo medio entre pasos del funnel en el modelo dimensional
-WITH page_times AS (
+WITH funnel AS (
+    SELECT
+        f.fact_id,
+        f.session_code,
+        f.event_timestamp,
+        f.time_on_page_seconds,
+        f.items_in_cart,
+        f.purchased,
+        du.user_code AS user_id,
+        dd.device_type,
+        dc.country_name AS country,
+        ds.source_name AS referral_source,
+        dp.page_type
+    FROM fact_funnel AS f
+    LEFT JOIN dim_user AS du ON f.user_id = du.user_id
+    LEFT JOIN dim_device AS dd ON f.device_id = dd.device_id
+    LEFT JOIN dim_country AS dc ON f.country_id = dc.country_id
+    LEFT JOIN dim_source AS ds ON f.source_id = ds.source_id
+    LEFT JOIN dim_page AS dp ON f.page_id = dp.page_id
+), page_times AS (
     SELECT
         session_code,
         MIN(CASE WHEN page_type = 'home' THEN event_timestamp END) AS t_home,

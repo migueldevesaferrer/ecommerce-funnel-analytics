@@ -134,35 +134,57 @@ Ejecutar:
 
 ---
 
-## 4. Exploratory Data Analysis (EDA)
+## 4. Análisis SQL
 
-El EDA incluye análisis sobre la tabla RAW `customer_journey`:
+El análisis se divide en dos capas complementarias:
 
-- Conteo de filas y sesiones  
-- Distribución de PageType  
-- Distribución de ItemsInCart  
-- Validación de Purchased  
-- Validación del funnel  
-- Detección de inconsistencias  
-- Análisis de sesiones incompletas  
+### 4.1 Exploratory Data Analysis (EDA) sobre RAW
 
-El análisis dimensional del funnel se encuentra en `init/04_dimensional_analysis.sql`, que trabaja con `fact_funnel` y las dimensiones `dim_*`.
+El EDA se realiza con `init/03_eda.sql` y trabaja directamente sobre la tabla RAW `customer_journey`.
+Incluye:
 
-De esta forma, `init/03_eda.sql` mantiene la exploración y validación de datos RAW, mientras que `init/04_dimensional_analysis.sql` contiene el análisis del funnel construido sobre el modelo dimensional.
+- Conteo de filas y sesiones
+- Rango de fechas y cobertura temporal
+- Distribución de `PageType`, `DeviceType`, `Country` y `ReferralSource`
+- Validación de la variable objetivo `Purchased`
+- Detección de nulos, duplicados y valores fuera de rango
+- Comprobación de la consistencia del funnel y del carrito
+- Análisis de sesiones incompletas y eventos fuera de orden
+
+### 4.2 Análisis dimensional del funnel
+
+El análisis dimensional se realiza con `init/04_dimensional_analysis.sql` y trabaja sobre el modelo ya poblado:
+`fact_funnel` + `dim_user`, `dim_device`, `dim_country`, `dim_source`, `dim_page`.
+Incluye:
+
+- Enriquecimiento de los hechos con dimensiones de negocio
+- Cálculo de sesiones por paso del funnel
+- Análisis de drop-off entre etapas
+- Conversion rate global y por dimensiones (`DeviceType`, `Country`, `ReferralSource`)
+- Tiempos medios entre pasos del funnel
+- Creación de vistas semánticas para reporting
+
+De esta forma, `init/03_eda.sql` se utiliza para explorar y validar los datos RAW, y `init/04_dimensional_analysis.sql` para analizar el funnel desde el modelo dimensional.
 
 ### Hallazgos principales
 
-- No existen nulos en columnas críticas  
-- No existen duplicados exactos  
-- Purchased es consistente  
-- ItemsInCart es coherente hasta checkout  
-- En confirmation, ItemsInCart siempre es 0 (limitación del dataset sintético)  
+- La calidad de datos RAW es sólida: no hay nulos críticos, duplicados exactos ni valores fuera de rango que afecten el análisis general.
+- `Purchased` es consistente por sesión, lo que permite usarlo como métrica fiable de conversión en el pipeline.
+- El funnel es lógico y coherente hasta checkout; la excepción sistemática es que `ItemsInCart` se ajusta a 0 en `confirmation`, lo cual corresponde al cierre de la compra.
+- El modelo dimensional `fact_funnel` + `dim_*` se puede usar con seguridad para reporting y análisis de KPI.
+- La conversión final es aproximadamente del 20 %, con comportamientos similares por dispositivo y diferencias moderadas por país y canal.
+
+### Limitaciones identificadas
+
+- El dataset no incluye información de importe o ticket medio, por lo que el análisis queda centrado en eventos y conversiones, no en valor monetario.
+- La variable `ItemsInCart` no refleja el valor del pedido en la etapa `confirmation`, lo que impide análisis de abandono basados en productividad económica.
+- El flujo es sintético: algunos patrones de comportamiento ideal de funnel pueden no coincidir con un e-commerce real.
 
 ---
 
 ## 5. Vistas SQL (Capa Semántica)
 
-Se crearon vistas para análisis a partir del modelo dimensional:
+Se crean las siguientes vistas para análisis a partir del modelo dimensional:
 
 - vw_dimensional_funnel  
 - vw_dimensional_funnel_sessions  
@@ -170,11 +192,13 @@ Se crearon vistas para análisis a partir del modelo dimensional:
 - vw_dimensional_conversion_by_country  
 - vw_dimensional_conversion_by_source  
 
-Estas vistas permiten análisis rápidos y construcción de dashboards basados en `fact_funnel` y las dimensiones.
+Estas vistas se construyen en `init/04_dimensional_analysis.sql` y son la base para los KPIs del funnel presentados en la siguiente sección.
 
 ---
 
 ## 6. KPIs del Funnel
+
+Los KPIs del funnel se extraen a partir de las vistas `vw_dimensional_*` creadas en `init/04_dimensional_analysis.sql`.
 
 ### 6.1 Conversion Rate Final
 
@@ -254,17 +278,18 @@ Estas vistas permiten análisis rápidos y construcción de dashboards basados e
 
 ## 7. Conclusiones
 
-- El dataset es consistente en casi todos los aspectos  
-- La única anomalía es el reseteo del carrito en confirmation  
-- El funnel es estable y permite análisis fiables  
-- Las vistas semánticas facilitan la explotación del modelo  
-- El proyecto es reproducible y adecuado para evaluación  
+- La calidad de datos RAW es adecuada para análisis de funnel y conversiones, con pocas inconsistencias críticas.
+- La transformación al modelo dimensional es estable y permite separar claramente la exploración de datos de la analítica de negocio.
+- El funnel muestra una conversión final sólida (~20 %) y un comportamiento homogéneo por dispositivo, lo que sugiere que la mejora debe venir de la experiencia de compra en lugar de problemas técnicos de canal.
+- Existen oportunidades relevantes de segmentación por país y por canal, ya que la conversión varía ligeramente entre ellos.
+- El dataset funciona bien para KPI de conversión, aunque no para análisis de facturación, ticket medio o valor transaccional.
 
 ---
 
 ## 8. Próximos pasos
 
-- Dashboard en Power BI  
-- Análisis de cohortes  
-- Segmentación de usuarios  
-- Modelos predictivos de conversión  
+- Automatizar el pipeline SQL con el orden `01_schema.sql`, `02_data.sql`, `03_eda.sql` y `04_dimensional_analysis.sql`.
+- Construir un dashboard o reporte sobre las vistas semánticas `vw_dimensional_*` para seguimiento de conversiones y abandono.
+- Extender el análisis con cohortes, segmentación por país/canal/dispositivo y análisis de abandono por etapa.
+- Incorporar alertas o pruebas de regresión para detectar cambios en el drop-off del funnel.
+- Evaluar modelos predictivos de conversión como siguiente capa analítica.

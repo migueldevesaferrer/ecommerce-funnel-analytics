@@ -81,6 +81,9 @@ El archivo `docker-compose.yml` crea:
 - Un contenedor PostgreSQL
 - Un contenedor pgAdmin para administración visual
 
+#### 3.1.2.1 Elección del motor de base de datos
+Este proyecto usa **PostgreSQL** como motor de datos. Se eligió por su estabilidad, buen soporte para SQL analítico y porque funciona bien con Docker y `pgAdmin`.
+
 #### 3.1.3 SQLFluff 4.x (opcional pero recomendado)
 El proyecto utiliza SQLFluff para validar y formatear SQL.  
 Es importante usar **SQLFluff versión 4.x**, ya que la versión 3.x usa un sistema de configuración distinto.

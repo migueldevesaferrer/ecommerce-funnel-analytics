@@ -4,10 +4,6 @@
    Objetivo: Analizar el funnel usando la tabla de hechos y las dimensiones.
    ============================================================ */
 
--- 0. Este archivo contiene el análisis dimensional del funnel
---     equivalente al bloque 4 del EDA, pero aplicado sobre
---     fact_funnel y las dimensiones de negocio.
-
 -- 1. CTE base: hechos enriquecidos con dimensiones
 WITH funnel AS (
     SELECT

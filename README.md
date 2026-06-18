@@ -50,6 +50,11 @@ ECOMMERCE-FUNNEL-ANALYTICS/
 └── README.md                   # Documentación principal del proyecto
 ```
 
+## 2.2 Diagrama ERD
+
+El siguiente gráfico muestra las relaciones entre las tablas RAW, DIM y FACT del proyecto.
+
+![ERD de relaciones](relaciones.png)
 
 ---
 

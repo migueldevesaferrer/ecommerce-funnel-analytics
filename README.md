@@ -105,7 +105,7 @@ Esto levanta:
 
 Entrar al contenedor:
 
-```docker exec -it ecommerce-postgres psql -U postgres```
+```docker exec -it postgres_db psql -U postgres```
 
 
 Crear la base de datos:
@@ -121,17 +121,17 @@ Salir con \q.
 Ejecutar en este orden:
 
 ```bash
-psql -U postgres -d ecommerce_db -f init/01_schema.sql
-psql -U postgres -d ecommerce_db -f init/02_data.sql
-psql -U postgres -d ecommerce_db -f init/03_eda.sql
-psql -U postgres -d ecommerce_db -f init/04_dimensional_analysis.sql
+docker exec -i postgres_db psql -U admin -d ecommerce_db -f /docker-entrypoint-initdb.d/01_schema.sql
+docker exec -i postgres_db psql -U admin -d ecommerce_db -f /docker-entrypoint-initdb.d/02_data.sql
+docker exec -i postgres_db psql -U admin -d ecommerce_db -f /docker-entrypoint-initdb.d/03_eda.sql
+docker exec -i postgres_db psql -U admin -d ecommerce_db -f /docker-entrypoint-initdb.d/04_dimensional_analysis.sql
 ```
 
 ---
 
 ### 3.5 Verificar que todo está correcto
 
-```docker exec -it ecommerce-postgres psql -U postgres -d ecommerce_db```
+```docker exec -it postgres_db psql -U admin -d ecommerce_db```
 
 Ejecutar:
 
